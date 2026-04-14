@@ -69,7 +69,7 @@ export default async function DashboardPage() {
 
         {/* Token usage */}
         {(() => {
-          const FREE_TIER_LIMIT = 500_000
+          const FREE_TIER_LIMIT = 10_000
           const consumed = keyRecord?.tokens_consumed ?? 0
           const remaining = Math.max(0, FREE_TIER_LIMIT - consumed)
           const pct = Math.min(100, Math.round((consumed / FREE_TIER_LIMIT) * 100))
@@ -82,7 +82,7 @@ export default async function DashboardPage() {
                   Sense Tokens
                 </div>
                 <div className="text-xs font-mono" style={{ color: 'var(--muted)' }}>
-                  Free tier — 500,000 tokens
+                  Free tier — 10,000 tokens
                 </div>
               </div>
               <div className="text-4xl font-bold font-mono mb-2" style={{ color: nearLimit ? '#ff4444' : 'var(--accent)' }}>
@@ -104,7 +104,7 @@ export default async function DashboardPage() {
                   className="inline-block mt-4 px-4 py-2 text-xs font-bold font-mono"
                   style={{ background: 'var(--accent)', color: '#000' }}
                 >
-                  Upgrade to Pro — 50M tokens/month
+                  Top up Sense Tokens
                 </Link>
               )}
             </div>

@@ -38,12 +38,12 @@ export async function GET(request: NextRequest) {
   }
 
   // Enforce free tier limit
-  const FREE_TIER_LIMIT = 500_000
+  const FREE_TIER_LIMIT = 10_000
   if (keyRecord.tokens_consumed >= FREE_TIER_LIMIT) {
     return NextResponse.json(
       {
         status: 402,
-        error: 'Free tier limit reached (500,000 Sense Tokens). Upgrade to Pro to continue.',
+        error: 'Free tier limit reached (10,000 Sense Tokens). Top up your credits to continue.',
         tokens_consumed: keyRecord.tokens_consumed,
         upgrade_url: 'https://afferens.vercel.app/pricing',
       },
