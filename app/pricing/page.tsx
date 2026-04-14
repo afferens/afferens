@@ -8,7 +8,7 @@ const PACKS = [
     tokensRaw: 50_000,
     callsEst: '~5,000',
     description: 'Hit the wall. Like what you see. Buy more.',
-    ctaHref: 'https://buy.stripe.com/SPARK_LINK',
+    ctaHref: 'https://buy.stripe.com/bJebJ13vk6MQapSfBe8N200',
     highlight: false,
   },
   {
@@ -18,7 +18,7 @@ const PACKS = [
     tokensRaw: 200_000,
     callsEst: '~20,000',
     description: 'Enough to build and ship a real integration.',
-    ctaHref: 'https://buy.stripe.com/BUILDER_LINK',
+    ctaHref: 'https://buy.stripe.com/4gM28r9TI5IM41u9cQ8N201',
     highlight: true,
   },
   {
@@ -28,7 +28,7 @@ const PACKS = [
     tokensRaw: 1_000_000,
     callsEst: '~100,000',
     description: 'For agents running in production.',
-    ctaHref: 'https://buy.stripe.com/STUDIO_LINK',
+    ctaHref: 'https://buy.stripe.com/eVq00j8PE8UYgOg60E8N202',
     highlight: false,
   },
   {
@@ -38,7 +38,7 @@ const PACKS = [
     tokensRaw: 4_000_000,
     callsEst: '~400,000',
     description: 'High-volume. Best per-token rate.',
-    ctaHref: 'https://buy.stripe.com/SCALE_LINK',
+    ctaHref: 'https://buy.stripe.com/6oU9AT8PEdbe9lO88M8N203',
     highlight: false,
   },
 ]
