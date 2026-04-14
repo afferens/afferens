@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 
 type SensorReading = {
   time: string
@@ -17,9 +17,18 @@ export default function NodePage() {
   const [readings, setReadings] = useState<SensorReading[]>([])
   const [totalTokens, setTotalTokens] = useState(0)
   const [error, setError] = useState('')
+  const [modelStatus, setModelStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle')
+  const [cameraActive, setCameraActive] = useState(false)
+
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const visionIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const latestGPS = useRef<Record<string, unknown> | null>(null)
   const latestMotion = useRef<Record<string, unknown> | null>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const modelRef = useRef<any>(null)
+  const streamRef = useRef<MediaStream | null>(null)
 
   // Watch GPS continuously
   useEffect(() => {
@@ -64,62 +73,101 @@ export default function NodePage() {
     return () => window.removeEventListener('devicemotion', handleMotion)
   }, [running])
 
-  // Send sensor data to Afferens every 5 seconds
+  // Load TF model and start camera when running
   useEffect(() => {
     if (!running) return
 
-    async function sendReading(
-      modality: string,
-      classification: string,
-      data: Record<string, unknown>
-    ) {
+    let cancelled = false
+
+    async function initCamera() {
+      setModelStatus('loading')
       try {
-        const res = await fetch('/api/ingest', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-API-KEY': apiKey,
-          },
-          body: JSON.stringify({ modality, classification, data }),
+        // Dynamic imports — avoids SSR crash and keeps initial bundle small
+        const tf = await import('@tensorflow/tfjs')
+        await tf.ready()
+        const cocoSsd = await import('@tensorflow-models/coco-ssd')
+        const model = await cocoSsd.load()
+        if (cancelled) return
+        modelRef.current = model
+        setModelStatus('ready')
+
+        // Start rear camera
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' }, width: { ideal: 640 }, height: { ideal: 480 } },
+          audio: false,
         })
-        const json = await res.json()
-        return json
-      } catch {
-        return null
+        if (cancelled) { stream.getTracks().forEach(t => t.stop()); return }
+        streamRef.current = stream
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream
+          await videoRef.current.play()
+        }
+        setCameraActive(true)
+      } catch (e) {
+        if (!cancelled) {
+          setModelStatus('error')
+          setError(`Camera/model error: ${e instanceof Error ? e.message : String(e)}`)
+        }
       }
     }
+
+    initCamera()
+
+    return () => {
+      cancelled = true
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(t => t.stop())
+        streamRef.current = null
+      }
+      setCameraActive(false)
+      setModelStatus('idle')
+    }
+  }, [running])
+
+  async function sendReading(
+    modality: string,
+    classification: string,
+    data: Record<string, unknown>
+  ) {
+    try {
+      const res = await fetch('/api/ingest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-API-KEY': apiKey },
+        body: JSON.stringify({ modality, classification, data }),
+      })
+      return await res.json()
+    } catch {
+      return null
+    }
+  }
+
+  // GPS + Motion pulse every 5s
+  useEffect(() => {
+    if (!running) return
 
     async function pulse() {
       const time = new Date().toLocaleTimeString()
       let tokensThisPulse = 0
 
-      // Send GPS/spatial if available
       if (latestGPS.current) {
         const result = await sendReading('SPATIAL', 'iphone_gps', latestGPS.current)
         if (result?.status === 200) {
           tokensThisPulse += result.sense_tokens_consumed
           setReadings(prev => [{
-            time,
-            modality: 'SPATIAL',
-            data: latestGPS.current!,
-            tokens: result.sense_tokens_consumed,
-            entity_id: result.entity_id,
-          }, ...prev].slice(0, 20))
+            time, modality: 'SPATIAL', data: latestGPS.current!,
+            tokens: result.sense_tokens_consumed, entity_id: result.entity_id,
+          }, ...prev].slice(0, 30))
         }
       }
 
-      // Send motion/interoception if available
       if (latestMotion.current) {
         const result = await sendReading('INTEROCEPTION', 'iphone_motion', latestMotion.current)
         if (result?.status === 200) {
           tokensThisPulse += result.sense_tokens_consumed
           setReadings(prev => [{
-            time,
-            modality: 'INTEROCEPTION',
-            data: latestMotion.current!,
-            tokens: result.sense_tokens_consumed,
-            entity_id: result.entity_id,
-          }, ...prev].slice(0, 20))
+            time, modality: 'INTEROCEPTION', data: latestMotion.current!,
+            tokens: result.sense_tokens_consumed, entity_id: result.entity_id,
+          }, ...prev].slice(0, 30))
         }
       }
 
@@ -130,31 +178,91 @@ export default function NodePage() {
     }
 
     intervalRef.current = setInterval(pulse, 5000)
-    pulse() // fire immediately on start
+    pulse()
+
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [running, apiKey])
+
+  // Vision detection pulse every 10s (heavier — runs object detection)
+  const runVision = useCallback(async () => {
+    if (!modelRef.current || !videoRef.current || !canvasRef.current) return
+    const video = videoRef.current
+    if (video.readyState < 2) return
+
+    const predictions = await modelRef.current.detect(video)
+    if (!predictions || predictions.length === 0) return
+
+    // Draw bounding boxes on canvas overlay
+    const canvas = canvasRef.current
+    canvas.width = video.videoWidth
+    canvas.height = video.videoHeight
+    const ctx = canvas.getContext('2d')
+    if (ctx) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      ctx.strokeStyle = '#00ff88'
+      ctx.lineWidth = 2
+      ctx.font = '12px monospace'
+      ctx.fillStyle = '#00ff88'
+      for (const p of predictions) {
+        const [x, y, w, h] = p.bbox
+        ctx.strokeRect(x, y, w, h)
+        ctx.fillText(`${p.class} ${Math.round(p.score * 100)}%`, x + 2, y > 14 ? y - 4 : y + 14)
+      }
+    }
+
+    const detectionData = {
+      objects: predictions.map((p: { class: string; score: number; bbox: number[] }) => ({
+        label: p.class,
+        confidence: parseFloat(p.score.toFixed(3)),
+        bbox_x: Math.round(p.bbox[0]),
+        bbox_y: Math.round(p.bbox[1]),
+        bbox_w: Math.round(p.bbox[2]),
+        bbox_h: Math.round(p.bbox[3]),
+      })),
+      object_count: predictions.length,
+      model: 'coco-ssd',
+      frame_width: video.videoWidth,
+      frame_height: video.videoHeight,
+    }
+
+    const time = new Date().toLocaleTimeString()
+    const result = await sendReading('VISION', 'iphone_camera_coco', detectionData)
+    if (result?.status === 200) {
+      setTotalTokens(prev => prev + result.sense_tokens_consumed)
+      setReadings(prev => [{
+        time, modality: 'VISION', data: detectionData,
+        tokens: result.sense_tokens_consumed, entity_id: result.entity_id,
+      }, ...prev].slice(0, 30))
+      setStatus('streaming')
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiKey])
+
+  useEffect(() => {
+    if (!running || modelStatus !== 'ready' || !cameraActive) return
+
+    visionIntervalRef.current = setInterval(runVision, 10000)
+    // Fire first detection after a short delay to let video stabilize
+    const t = setTimeout(runVision, 2000)
 
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
+      if (visionIntervalRef.current) clearInterval(visionIntervalRef.current)
+      clearTimeout(t)
     }
-  }, [running, apiKey])
+  }, [running, modelStatus, cameraActive, runVision])
 
   async function startNode() {
     setError('')
-    if (!apiKey.trim()) {
-      setError('Paste your API key first.')
-      return
-    }
+    if (!apiKey.trim()) { setError('Paste your API key first.'); return }
 
-    // iOS requires a user gesture to enable DeviceMotion
+    // iOS motion permission
     if (typeof (DeviceMotionEvent as unknown as { requestPermission?: () => Promise<string> }).requestPermission === 'function') {
       try {
         const permission = await (DeviceMotionEvent as unknown as { requestPermission: () => Promise<string> }).requestPermission()
-        if (permission !== 'granted') {
-          setError('Motion sensor permission denied.')
-          return
-        }
+        if (permission !== 'granted') { setError('Motion sensor permission denied.'); return }
       } catch {
-        setError('Could not request motion permission.')
-        return
+        setError('Could not request motion permission.'); return
       }
     }
 
@@ -166,6 +274,7 @@ export default function NodePage() {
     setRunning(false)
     setStatus('idle')
     if (intervalRef.current) clearInterval(intervalRef.current)
+    if (visionIntervalRef.current) clearInterval(visionIntervalRef.current)
   }
 
   return (
@@ -234,6 +343,44 @@ export default function NodePage() {
         </button>
       )}
 
+      {/* Camera viewfinder */}
+      {running && (
+        <div className="mb-6">
+          <div className="text-xs font-mono mb-2 uppercase tracking-widest" style={{ color: 'var(--muted)' }}>
+            Camera — VISION modality
+          </div>
+          <div className="relative w-full border" style={{ borderColor: 'var(--border)', background: '#000', aspectRatio: '4/3', overflow: 'hidden' }}>
+            <video
+              ref={videoRef}
+              muted
+              playsInline
+              className="w-full h-full object-cover"
+              style={{ display: cameraActive ? 'block' : 'none' }}
+            />
+            <canvas
+              ref={canvasRef}
+              className="absolute inset-0 w-full h-full"
+              style={{ pointerEvents: 'none' }}
+            />
+            {!cameraActive && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-xs font-mono" style={{ color: 'var(--muted)' }}>
+                  {modelStatus === 'loading' ? 'Loading vision model...' : modelStatus === 'error' ? 'Camera unavailable' : 'Initializing...'}
+                </span>
+              </div>
+            )}
+            {modelStatus === 'ready' && cameraActive && (
+              <div className="absolute top-2 left-2 px-2 py-0.5" style={{ background: 'rgba(0,255,136,0.15)', border: '1px solid var(--accent)' }}>
+                <span className="text-xs font-mono" style={{ color: 'var(--accent)' }}>LIVE · COCO-SSD</span>
+              </div>
+            )}
+          </div>
+          <p className="text-xs font-mono mt-1" style={{ color: 'var(--muted)' }}>
+            Object detection runs on-device every 10 seconds. Detections stream to /api/ingest as VISION events.
+          </p>
+        </div>
+      )}
+
       {/* What's being sensed */}
       {running && (
         <div className="mb-6 border p-4" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
@@ -242,17 +389,18 @@ export default function NodePage() {
           </div>
           <div className="flex flex-col gap-2">
             {[
-              { name: 'GPS', label: 'SPATIAL — lat, lng, altitude, speed, heading' },
-              { name: 'MOTION', label: 'INTEROCEPTION — accelerometer, gyroscope' },
+              { label: 'VISION — camera, object detection (COCO-SSD, 80 classes)' },
+              { label: 'SPATIAL — lat, lng, altitude, speed, heading' },
+              { label: 'INTEROCEPTION — accelerometer, gyroscope' },
             ].map(s => (
-              <div key={s.name} className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--accent)' }} />
+              <div key={s.label} className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: 'var(--accent)' }} />
                 <span className="text-xs font-mono" style={{ color: 'var(--foreground)' }}>{s.label}</span>
               </div>
             ))}
           </div>
           <p className="text-xs font-mono mt-3" style={{ color: 'var(--muted)' }}>
-            Streaming every 5 seconds → /api/ingest
+            SPATIAL + INTEROCEPTION → every 5s · VISION → every 10s
           </p>
         </div>
       )}
