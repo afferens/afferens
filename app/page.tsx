@@ -11,6 +11,7 @@ export default function Home() {
         </span>
         <div className="flex items-center gap-6 text-sm" style={{ color: 'var(--muted)' }}>
           <Link href="/docs" className="hover:text-white transition-colors">Docs</Link>
+          <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
           <Link
             href="/signup"
             className="px-4 py-2 text-sm font-medium border transition-colors"

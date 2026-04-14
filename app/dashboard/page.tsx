@@ -68,17 +68,48 @@ export default async function DashboardPage() {
         </div>
 
         {/* Token usage */}
-        <div className="border p-6 mb-6" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
-          <div className="text-xs font-mono mb-3 uppercase tracking-widest" style={{ color: 'var(--muted)' }}>
-            Sense Tokens Consumed
-          </div>
-          <div className="text-4xl font-bold font-mono" style={{ color: 'var(--accent)' }}>
-            {keyRecord?.tokens_consumed?.toLocaleString() ?? '0'}
-          </div>
-          <p className="text-xs mt-2 font-mono" style={{ color: 'var(--muted)' }}>
-            Each API call consumes tokens based on the modality requested.
-          </p>
-        </div>
+        {(() => {
+          const FREE_TIER_LIMIT = 500_000
+          const consumed = keyRecord?.tokens_consumed ?? 0
+          const remaining = Math.max(0, FREE_TIER_LIMIT - consumed)
+          const pct = Math.min(100, Math.round((consumed / FREE_TIER_LIMIT) * 100))
+          const nearLimit = pct >= 80
+
+          return (
+            <div className="border p-6 mb-6" style={{ borderColor: nearLimit ? '#ff4444' : 'var(--border)', background: 'var(--surface)' }}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-xs font-mono uppercase tracking-widest" style={{ color: 'var(--muted)' }}>
+                  Sense Tokens
+                </div>
+                <div className="text-xs font-mono" style={{ color: 'var(--muted)' }}>
+                  Free tier — 500,000 tokens
+                </div>
+              </div>
+              <div className="text-4xl font-bold font-mono mb-2" style={{ color: nearLimit ? '#ff4444' : 'var(--accent)' }}>
+                {consumed.toLocaleString()}
+              </div>
+              {/* Progress bar */}
+              <div className="w-full h-1.5 rounded-full mb-2" style={{ background: 'var(--border)' }}>
+                <div
+                  className="h-1.5 rounded-full"
+                  style={{ width: `${pct}%`, background: nearLimit ? '#ff4444' : 'var(--accent)', transition: 'width 0.3s' }}
+                />
+              </div>
+              <p className="text-xs font-mono" style={{ color: nearLimit ? '#ff4444' : 'var(--muted)' }}>
+                {remaining.toLocaleString()} tokens remaining ({pct}% used)
+              </p>
+              {nearLimit && (
+                <Link
+                  href="/pricing"
+                  className="inline-block mt-4 px-4 py-2 text-xs font-bold font-mono"
+                  style={{ background: 'var(--accent)', color: '#000' }}
+                >
+                  Upgrade to Pro — 50M tokens/month
+                </Link>
+              )}
+            </div>
+          )
+        })()}
 
         {/* Quick start */}
         <div className="border p-6" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>

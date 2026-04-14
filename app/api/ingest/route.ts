@@ -71,6 +71,20 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  // Enforce free tier limit
+  const FREE_TIER_LIMIT = 500_000
+  if (keyRecord.tokens_consumed >= FREE_TIER_LIMIT) {
+    return NextResponse.json(
+      {
+        status: 402,
+        error: 'Free tier limit reached (500,000 Sense Tokens). Upgrade to Pro to continue.',
+        tokens_consumed: keyRecord.tokens_consumed,
+        upgrade_url: 'https://afferens.vercel.app/pricing',
+      },
+      { status: 402 }
+    )
+  }
+
   // Generate a unique entity ID for this node reading
   const entityId = `LIVE-${normalizedModality.slice(0, 3)}-${Date.now().toString(36).toUpperCase()}`
 
