@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   // Look up the API key in the database
   const { data: keyRecord, error: keyError } = await supabase
     .from('api_keys')
-    .select('id, user_id, tokens_consumed, is_active')
+    .select('id, user_id, tokens_consumed, is_active, auto_topup_enabled, auto_topup_threshold')
     .eq('key', apiKey)
     .single()
 
@@ -73,11 +73,23 @@ export async function GET(request: NextRequest) {
   // Calculate total tokens this request costs
   const totalTokens = events.reduce((sum, e) => sum + e.sense_tokens_cost, 0)
 
+  const newConsumed = keyRecord.tokens_consumed + totalTokens
+
   // Update the token counter for this API key
   await supabase
     .from('api_keys')
-    .update({ tokens_consumed: keyRecord.tokens_consumed + totalTokens })
+    .update({ tokens_consumed: newConsumed })
     .eq('id', keyRecord.id)
+
+  // Trigger auto top-up if enabled and tokens are below threshold (fire and forget)
+  const remaining = FREE_TIER_LIMIT - newConsumed
+  if (remaining <= (keyRecord.auto_topup_threshold ?? 1000) && keyRecord.auto_topup_enabled) {
+    fetch(`${process.env.NEXT_PUBLIC_APP_URL ?? 'https://afferens.vercel.app'}/api/autotopup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key_id: keyRecord.id }),
+    }).catch(() => {}) // fire and forget
+  }
 
   // Format the response to match the expected schema
   const responseData = events.map(e => ({

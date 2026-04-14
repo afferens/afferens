@@ -4,7 +4,6 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
-// How many tokens each Stripe Payment Link product grants
 const TOKEN_GRANTS: Record<string, number> = {
   spark:   50_000,
   builder: 200_000,
@@ -36,15 +35,54 @@ export async function POST(request: NextRequest) {
   }
 
   const session = event.data.object as Stripe.Checkout.Session
+  const supabase = createAdminClient()
 
-  // Get the customer's email from the session
+  // ── Setup mode: user saved their card for auto top-up ──
+  if (session.mode === 'setup') {
+    const userId = session.metadata?.user_id
+    const pack = session.metadata?.pack ?? 'spark'
+    const threshold = parseInt(session.metadata?.threshold ?? '1000')
+
+    if (!userId) return NextResponse.json({ error: 'No user_id in metadata' }, { status: 400 })
+
+    // Get the setup intent to retrieve the saved payment method
+    const setupIntent = await stripe.setupIntents.retrieve(session.setup_intent as string)
+    const paymentMethodId = setupIntent.payment_method as string
+
+    // Create or retrieve a Stripe customer for this user
+    const { data: { users } } = await supabase.auth.admin.listUsers()
+    const user = users.find(u => u.id === userId)
+    if (!user) return NextResponse.json({ error: 'User not found' }, { status: 400 })
+
+    let customerId = session.customer as string | null
+    if (!customerId) {
+      const customer = await stripe.customers.create({ email: user.email })
+      customerId = customer.id
+    }
+
+    // Attach payment method to customer
+    await stripe.paymentMethods.attach(paymentMethodId, { customer: customerId })
+
+    await supabase
+      .from('api_keys')
+      .update({
+        stripe_customer_id: customerId,
+        stripe_payment_method_id: paymentMethodId,
+        auto_topup_enabled: true,
+        auto_topup_pack: pack,
+        auto_topup_threshold: threshold,
+      })
+      .eq('user_id', userId)
+
+    return NextResponse.json({ received: true, mode: 'setup' })
+  }
+
+  // ── Payment mode: manual credit pack purchase ──
   const email = session.customer_details?.email
   if (!email) {
     return NextResponse.json({ error: 'No email on session' }, { status: 400 })
   }
 
-  // Determine which pack was purchased via the product name metadata
-  // We look at the line items to find the product name
   const lineItems = await stripe.checkout.sessions.listLineItems(session.id, { limit: 1 })
   const productName = lineItems.data[0]?.description?.toLowerCase() ?? ''
 
@@ -57,7 +95,6 @@ export async function POST(request: NextRequest) {
   }
 
   if (tokensToAdd === 0) {
-    // Fallback: derive from amount paid
     const amount = session.amount_total ?? 0
     if (amount <= 900)       tokensToAdd = TOKEN_GRANTS.spark
     else if (amount <= 2900) tokensToAdd = TOKEN_GRANTS.builder
@@ -65,9 +102,6 @@ export async function POST(request: NextRequest) {
     else                     tokensToAdd = TOKEN_GRANTS.scale
   }
 
-  const supabase = createAdminClient()
-
-  // Find the user by email
   const { data: { users }, error: userError } = await supabase.auth.admin.listUsers()
   if (userError) {
     return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 })
@@ -75,12 +109,10 @@ export async function POST(request: NextRequest) {
 
   const user = users.find(u => u.email === email)
   if (!user) {
-    // User doesn't have an account yet — store the grant to apply on signup (future improvement)
     console.error(`Stripe webhook: no Afferens account found for email ${email}`)
     return NextResponse.json({ received: true, warning: 'No matching user found' })
   }
 
-  // Fetch their current api_key record
   const { data: keyRecord, error: keyError } = await supabase
     .from('api_keys')
     .select('id, tokens_consumed')
@@ -91,19 +123,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'No api_keys record for user' }, { status: 500 })
   }
 
-  // We track "tokens_consumed" so we subtract the grant from the consumed count
-  // (effectively giving them a credit). If consumed goes below 0 we clamp to 0.
   const newConsumed = Math.max(0, keyRecord.tokens_consumed - tokensToAdd)
 
-  const { error: updateError } = await supabase
+  await supabase
     .from('api_keys')
     .update({ tokens_consumed: newConsumed })
     .eq('id', keyRecord.id)
 
-  if (updateError) {
-    return NextResponse.json({ error: 'Failed to update token balance' }, { status: 500 })
-  }
-
-  console.log(`Stripe webhook: granted ${tokensToAdd} tokens to ${email}`)
   return NextResponse.json({ received: true, tokens_granted: tokensToAdd })
 }

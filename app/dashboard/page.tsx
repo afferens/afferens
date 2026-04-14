@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import CopyButton from './CopyButton'
+import AutoTopup from './AutoTopup'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -15,7 +16,7 @@ export default async function DashboardPage() {
   const admin = createAdminClient()
   const { data: keyRecord } = await admin
     .from('api_keys')
-    .select('key, tokens_consumed, created_at, is_active')
+    .select('key, tokens_consumed, created_at, is_active, auto_topup_enabled, auto_topup_pack, auto_topup_threshold')
     .eq('user_id', user.id)
     .single()
 
@@ -110,6 +111,13 @@ export default async function DashboardPage() {
             </div>
           )
         })()}
+
+        {/* Auto top-up */}
+        <AutoTopup
+          enabled={keyRecord?.auto_topup_enabled ?? false}
+          pack={keyRecord?.auto_topup_pack ?? 'spark'}
+          threshold={keyRecord?.auto_topup_threshold ?? 1000}
+        />
 
         {/* Quick start */}
         <div className="border p-6" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
