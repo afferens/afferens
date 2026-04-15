@@ -33,6 +33,9 @@ export default async function DashboardPage() {
           <span className="text-xs font-mono" style={{ color: 'var(--muted)' }}>
             {user.email}
           </span>
+          <Link href="/feedback" className="text-xs font-mono" style={{ color: 'var(--muted)' }}>
+            feedback
+          </Link>
           <form action="/api/auth/signout" method="POST">
             <button type="submit" className="text-xs font-mono" style={{ color: 'var(--muted)' }}>
               sign out
