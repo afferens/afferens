@@ -121,10 +121,13 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="px-8 py-6 border-t text-center" style={{ borderColor: 'var(--border)' }}>
+      <footer className="px-8 py-6 border-t flex items-center justify-between" style={{ borderColor: 'var(--border)' }}>
         <span className="text-xs font-mono" style={{ color: 'var(--muted)' }}>
           afferens — the afferent layer for AI agents
         </span>
+        <Link href="/legal" className="text-xs font-mono" style={{ color: 'var(--muted)' }}>
+          Privacy &amp; Terms
+        </Link>
       </footer>
     </main>
   )

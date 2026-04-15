@@ -8,5 +8,5 @@ export async function POST() {
   const headersList = await headers()
   const host = headersList.get('host') || 'afferens.vercel.app'
   const protocol = host.includes('localhost') ? 'http' : 'https'
-  return NextResponse.redirect(new URL('/', `${protocol}://${host}`))
+  return NextResponse.redirect(new URL('/', `${protocol}://${host}`), { status: 303 })
 }
