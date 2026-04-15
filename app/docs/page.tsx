@@ -14,7 +14,7 @@ export default function DocsPage() {
           className="px-4 py-2 text-sm font-medium border"
           style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}
         >
-          Get API Key
+          Sign In
         </Link>
       </nav>
 

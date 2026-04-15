@@ -84,7 +84,7 @@ export default function PricingPage() {
             className="text-xs font-mono font-bold px-4 py-2 flex-shrink-0"
             style={{ border: '1px solid var(--accent)', color: 'var(--accent)' }}
           >
-            Get API Key
+            Sign In Free
           </Link>
         </div>
 

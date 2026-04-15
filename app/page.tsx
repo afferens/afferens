@@ -17,7 +17,7 @@ export default function Home() {
             className="px-4 py-2 text-sm font-medium border transition-colors"
             style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}
           >
-            Get API Key
+            Sign In
           </Link>
         </div>
       </nav>
@@ -48,7 +48,7 @@ export default function Home() {
             className="px-8 py-3 font-bold text-sm transition-all"
             style={{ background: 'var(--accent)', color: '#000' }}
           >
-            Get your API key — free
+            Get started — free
           </Link>
           <Link
             href="/docs"
