@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function Home() {
   return (
@@ -6,9 +7,9 @@ export default function Home() {
 
       {/* Nav */}
       <nav className="flex items-center justify-between px-8 py-5 border-b" style={{ borderColor: 'var(--border)' }}>
-        <span className="text-lg font-bold tracking-tight" style={{ color: 'var(--accent)' }}>
-          afferens
-        </span>
+        <Link href="/">
+          <Image src="/afferens-logo.png" alt="Afferens" height={28} width={140} style={{ objectFit: 'contain' }} />
+        </Link>
         <div className="flex items-center gap-6 text-sm" style={{ color: 'var(--muted)' }}>
           <Link href="/docs" className="hover:text-white transition-colors">Docs</Link>
           <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>

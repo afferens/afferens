@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function SignupPage() {
   const [email, setEmail] = useState('')
@@ -48,8 +49,8 @@ export default function SignupPage() {
       <div className="w-full max-w-sm">
 
         <div className="mb-10 text-center">
-          <Link href="/" className="text-lg font-bold" style={{ color: 'var(--accent)' }}>
-            afferens
+          <Link href="/">
+            <Image src="/afferens-logo.png" alt="Afferens" height={28} width={140} style={{ objectFit: 'contain' }} />
           </Link>
         </div>
 

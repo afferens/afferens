@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 
 const PACKS = [
   {
@@ -49,8 +50,8 @@ export default function PricingPage() {
 
       {/* Nav */}
       <nav className="flex items-center justify-between px-8 py-5 border-b" style={{ borderColor: 'var(--border)' }}>
-        <Link href="/" className="text-lg font-bold" style={{ color: 'var(--accent)' }}>
-          afferens
+        <Link href="/">
+          <Image src="/afferens-logo.png" alt="Afferens" height={28} width={140} style={{ objectFit: 'contain' }} />
         </Link>
         <div className="flex items-center gap-6">
           <Link href="/docs" className="text-xs font-mono" style={{ color: 'var(--muted)' }}>Docs</Link>
