@@ -53,9 +53,9 @@ export default function PricingPage() {
         <Link href="/">
           <Image src="/afferens-logo.png" alt="Afferens" height={28} width={140} style={{ objectFit: 'contain' }} />
         </Link>
-        <div className="flex items-center gap-6">
-          <Link href="/docs" className="text-xs font-mono" style={{ color: 'var(--muted)' }}>Docs</Link>
-          <Link href="/dashboard" className="text-xs font-mono" style={{ color: 'var(--muted)' }}>Dashboard</Link>
+        <div className="flex items-center gap-6 text-sm" style={{ color: 'var(--muted)' }}>
+          <Link href="/docs" className="hover:text-white transition-colors">Docs</Link>
+          <Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link>
         </div>
       </nav>
 
@@ -67,7 +67,7 @@ export default function PricingPage() {
           <h1 className="text-3xl font-bold mb-3" style={{ color: 'var(--foreground)' }}>
             Sense Tokens
           </h1>
-          <p className="text-sm font-mono max-w-xl" style={{ color: 'var(--muted)' }}>
+          <p className="text-base max-w-xl" style={{ color: 'var(--muted)' }}>
             No subscriptions. No monthly commitments. Buy tokens when you need them — they never expire.
           </p>
         </div>
@@ -94,10 +94,10 @@ export default function PricingPage() {
           {PACKS.map(pack => (
             <div
               key={pack.name}
-              className="border p-6 flex flex-col"
+              className="border p-6 flex flex-col card-hover"
               style={{
                 borderColor: pack.highlight ? 'var(--accent)' : 'var(--border)',
-                background: pack.highlight ? 'var(--surface)' : 'transparent',
+                background: pack.highlight ? 'var(--surface)' : 'var(--surface)',
               }}
             >
               {pack.highlight && (
@@ -117,7 +117,7 @@ export default function PricingPage() {
               <div className="text-xs font-mono mb-4" style={{ color: 'var(--muted)' }}>
                 {pack.callsEst} avg API calls
               </div>
-              <p className="text-xs font-mono mb-6 flex-1" style={{ color: 'var(--muted)' }}>
+              <p className="text-sm mb-6 flex-1" style={{ color: 'var(--muted)' }}>
                 {pack.description}
               </p>
               <a

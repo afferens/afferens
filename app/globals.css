@@ -1,12 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0a0a0a;
-  --foreground: #e5e5e5;
+  --background: #080808;
+  --foreground: #ededed;
   --accent: #00ff88;
-  --surface: #111111;
-  --border: #1f1f1f;
-  --muted: #666666;
+  --accent-dim: rgba(0, 255, 136, 0.08);
+  --surface: #101010;
+  --surface-2: #161616;
+  --border: #222222;
+  --border-subtle: #1a1a1a;
+  --muted: #606060;
+  --muted-2: #404040;
 }
 
 @theme inline {
@@ -16,10 +20,18 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Sans-serif for all UI text — mono only for code */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: 'Geist Mono', 'Courier New', monospace;
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+code, pre, .font-mono {
+  font-family: var(--font-geist-mono), 'Courier New', monospace;
 }
 
 * {
@@ -27,5 +39,22 @@ body {
 }
 
 ::selection {
-  background: #00ff8833;
+  background: rgba(0, 255, 136, 0.15);
+}
+
+/* Smooth transitions on interactive elements */
+a, button {
+  transition: opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease, background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Accent glow utility */
+.accent-glow {
+  box-shadow: 0 0 0 1px rgba(0, 255, 136, 0.2), 0 0 20px rgba(0, 255, 136, 0.05);
+}
+
+/* Card hover lift */
+.card-hover:hover {
+  border-color: #333 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
 }
