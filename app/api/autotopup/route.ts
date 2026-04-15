@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Payment failed, auto top-up disabled' }, { status: 402 })
   }
 
-  const newConsumed = Math.max(0, keyRecord.tokens_consumed - tokensToAdd)
+  const newConsumed = keyRecord.tokens_consumed - tokensToAdd
 
   await supabase
     .from('api_keys')

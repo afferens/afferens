@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import Link from 'next/link'
+import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 
@@ -41,8 +42,8 @@ export default async function AdminPage() {
     <main className="min-h-screen flex flex-col" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
 
       <nav className="flex items-center justify-between px-8 py-5 border-b" style={{ borderColor: 'var(--border)' }}>
-        <Link href="/" className="text-lg font-bold" style={{ color: 'var(--accent)' }}>
-          afferens
+        <Link href="/">
+          <Image src="/afferens-logo.png" alt="Afferens" height={28} width={140} style={{ objectFit: 'contain' }} />
         </Link>
         <span className="text-xs font-mono" style={{ color: 'var(--muted)' }}>admin</span>
       </nav>
