@@ -119,6 +119,46 @@ export default function DocsPage() {
           </div>
         </section>
 
+        {/* Actuation endpoint */}
+        <section className="mb-12">
+          <div className="border mb-4" style={{ borderColor: 'var(--border)' }}>
+            <div className="flex items-center gap-3 px-5 py-4 border-b" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+              <span className="text-xs font-mono px-2 py-0.5" style={{ background: '#330022', color: '#ff4488' }}>POST</span>
+              <code className="text-sm font-mono" style={{ color: 'var(--foreground)' }}>/api/actuation</code>
+            </div>
+            <div className="p-5">
+              <p className="text-sm mb-6" style={{ color: 'var(--muted)' }}>
+                Send a command to a physical node. Costs 5 Sense Tokens per command.
+              </p>
+              <div className="mb-6">
+                <div className="text-xs font-mono mb-3 uppercase tracking-widest" style={{ color: 'var(--muted)' }}>Body</div>
+                <div className="border" style={{ borderColor: 'var(--border)' }}>
+                  {[
+                    { param: 'target_node_id', type: 'string', desc: 'ID of the node to command (e.g. IPHONE-IOS-01).' },
+                    { param: 'command_type', type: 'string', desc: 'CAPTURE_FRAME · TRIGGER_ALARM · MOVE_TO · ROTATE_CAMERA · LOCK · UNLOCK · ADJUST_SENSOR · SHUTDOWN_NODE' },
+                    { param: 'parameters', type: 'object', desc: 'Optional command-specific parameters.' },
+                  ].map((p, i) => (
+                    <div key={p.param} className={`flex gap-4 p-4 ${i > 0 ? 'border-t' : ''}`} style={{ borderColor: 'var(--border)' }}>
+                      <div className="w-36 shrink-0">
+                        <code className="text-xs font-mono" style={{ color: 'var(--accent)' }}>{p.param}</code>
+                        <div className="text-xs mt-1 font-mono" style={{ color: 'var(--muted)' }}>{p.type}</div>
+                      </div>
+                      <div className="text-xs" style={{ color: 'var(--muted)' }}>{p.desc}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <pre className="text-xs font-mono overflow-x-auto p-4 border" style={{ borderColor: 'var(--border)', background: '#0a0a0a', color: '#aaa' }}>
+{`curl https://afferens.vercel.app/api/actuation \\
+  -X POST \\
+  -H "X-API-KEY: YOUR_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"target_node_id":"IPHONE-IOS-01","command_type":"CAPTURE_FRAME"}'`}
+              </pre>
+            </div>
+          </div>
+        </section>
+
         {/* Code examples */}
         <section className="mb-12">
           <h2 className="text-xs font-mono uppercase tracking-widest mb-4" style={{ color: 'var(--muted)' }}>Code Examples</h2>

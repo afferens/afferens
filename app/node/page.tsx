@@ -10,6 +10,13 @@ type SensorReading = {
   entity_id?: string
 }
 
+type Command = {
+  id: string
+  command_type: string
+  parameters: Record<string, unknown>
+  received_at: string
+}
+
 export default function NodePage() {
   const [apiKey, setApiKey] = useState('')
   const [running, setRunning] = useState(false)
@@ -18,6 +25,7 @@ export default function NodePage() {
   const [totalTokens, setTotalTokens] = useState(0)
   const [error, setError] = useState('')
   const [modelStatus, setModelStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle')
+  const [commands, setCommands] = useState<Command[]>([])
   const [cameraActive, setCameraActive] = useState(false)
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -140,6 +148,36 @@ export default function NodePage() {
       return null
     }
   }
+
+  // Poll for incoming commands every 5s
+  useEffect(() => {
+    if (!running || !apiKey) return
+
+    const nodeId = `IPHONE-${navigator.userAgent.includes('iPhone') ? 'IOS' : 'DEVICE'}-01`
+
+    async function pollCommands() {
+      try {
+        const res = await fetch(`/api/commands?node_id=${encodeURIComponent(nodeId)}`, {
+          headers: { 'X-API-KEY': apiKey },
+        })
+        const result = await res.json()
+        if (result.commands?.length > 0) {
+          const received = result.commands.map((c: { id: string; command_type: string; parameters: Record<string, unknown> }) => ({
+            id: c.id,
+            command_type: c.command_type,
+            parameters: c.parameters,
+            received_at: new Date().toLocaleTimeString(),
+          }))
+          setCommands(prev => [...received, ...prev].slice(0, 20))
+        }
+      } catch { /* ignore */ }
+    }
+
+    const interval = setInterval(pollCommands, 5000)
+    pollCommands()
+    return () => clearInterval(interval)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [running, apiKey])
 
   // GPS + Motion pulse every 5s
   useEffect(() => {
@@ -402,6 +440,30 @@ export default function NodePage() {
           <p className="text-xs font-mono mt-3" style={{ color: 'var(--muted)' }}>
             SPATIAL + INTEROCEPTION → every 5s · VISION → every 10s
           </p>
+        </div>
+      )}
+
+      {/* Incoming commands */}
+      {commands.length > 0 && (
+        <div className="mb-6">
+          <div className="text-xs font-mono mb-3 uppercase tracking-widest" style={{ color: 'var(--muted)' }}>
+            Incoming commands
+          </div>
+          <div className="flex flex-col gap-2">
+            {commands.map((c, i) => (
+              <div key={i} className="border p-3" style={{ borderColor: '#ff4444', background: 'rgba(255,68,68,0.05)' }}>
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-xs font-mono font-bold" style={{ color: '#ff4444' }}>{c.command_type}</span>
+                  <span className="text-xs font-mono" style={{ color: 'var(--muted)' }}>{c.received_at}</span>
+                </div>
+                {Object.keys(c.parameters).length > 0 && (
+                  <pre className="text-xs font-mono overflow-x-auto" style={{ color: '#888' }}>
+                    {JSON.stringify(c.parameters, null, 2)}
+                  </pre>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
