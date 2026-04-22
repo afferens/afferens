@@ -136,7 +136,7 @@ When a developer calls `/api/actuation` to send a command to a physical node, it
 
 ### Step 1 — Clone the repo
 ```bash
-git clone https://github.com/[Faris-to-confirm-repo-name]/afferens.git
+git clone https://github.com/afferens/afferens.git
 cd afferens
 ```
 
