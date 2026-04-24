@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
 
   const { data: keyRecord, error: keyError } = await supabase
     .from('api_keys')
-    .select('id, tokens_consumed')
+    .select('id, tokens_consumed, referred_by, referral_redeemed')
     .eq('user_id', user.id)
     .single()
 
@@ -129,6 +129,32 @@ export async function POST(request: NextRequest) {
     .from('api_keys')
     .update({ tokens_consumed: newConsumed })
     .eq('id', keyRecord.id)
+
+  // Referral bonus — fires on first purchase if a referral code was applied
+  if (keyRecord.referred_by && !keyRecord.referral_redeemed) {
+    // Give buyer 10K bonus tokens and mark redeemed
+    await supabase
+      .from('api_keys')
+      .update({ tokens_consumed: newConsumed - 10_000, referral_redeemed: true })
+      .eq('id', keyRecord.id)
+
+    // Give referrer 10K bonus tokens and increment their count
+    const { data: referrer } = await supabase
+      .from('api_keys')
+      .select('id, tokens_consumed, referral_count')
+      .eq('referral_code', keyRecord.referred_by)
+      .single()
+
+    if (referrer) {
+      await supabase
+        .from('api_keys')
+        .update({
+          tokens_consumed: referrer.tokens_consumed - 10_000,
+          referral_count: (referrer.referral_count ?? 0) + 1,
+        })
+        .eq('id', referrer.id)
+    }
+  }
 
   return NextResponse.json({ received: true, tokens_granted: tokensToAdd })
 }

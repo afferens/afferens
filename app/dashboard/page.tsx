@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import CopyButton from './CopyButton'
 import AutoTopup from './AutoTopup'
+import ReferralCard from './ReferralCard'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -17,7 +18,7 @@ export default async function DashboardPage() {
   const admin = createAdminClient()
   const { data: keyRecord } = await admin
     .from('api_keys')
-    .select('key, tokens_consumed, created_at, is_active, auto_topup_enabled, auto_topup_pack, auto_topup_threshold')
+    .select('key, tokens_consumed, created_at, is_active, auto_topup_enabled, auto_topup_pack, auto_topup_threshold, referral_code, referral_count, referred_by, referral_redeemed')
     .eq('user_id', user.id)
     .single()
 
@@ -112,6 +113,16 @@ export default async function DashboardPage() {
             </div>
           )
         })()}
+
+        {/* Referrals */}
+        {keyRecord?.referral_code && (
+          <ReferralCard
+            referralCode={keyRecord.referral_code}
+            referralCount={keyRecord.referral_count ?? 0}
+            referredBy={keyRecord.referred_by ?? null}
+            referralRedeemed={keyRecord.referral_redeemed ?? false}
+          />
+        )}
 
         {/* Auto top-up */}
         <AutoTopup

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -10,6 +10,22 @@ export default function SignupPage() {
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [referralCode, setReferralCode] = useState('')
+  const [showRefInput, setShowRefInput] = useState(false)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const ref = params.get('ref')
+    if (ref) {
+      setReferralCode(ref.toUpperCase())
+      setShowRefInput(true)
+    }
+  }, [])
+
+  function callbackUrl() {
+    const base = `${window.location.origin}/api/auth/callback`
+    return referralCode ? `${base}?ref=${encodeURIComponent(referralCode)}` : base
+  }
 
   async function handleMagicLink(e: React.FormEvent) {
     e.preventDefault()
@@ -19,9 +35,7 @@ export default function SignupPage() {
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
-      },
+      options: { emailRedirectTo: callbackUrl() },
     })
 
     if (error) {
@@ -37,9 +51,7 @@ export default function SignupPage() {
     const supabase = createClient()
     await supabase.auth.signInWithOAuth({
       provider,
-      options: {
-        redirectTo: `${window.location.origin}/api/auth/callback`,
-      },
+      options: { redirectTo: callbackUrl() },
     })
   }
 
@@ -119,6 +131,27 @@ export default function SignupPage() {
                 className="w-full px-4 py-3 text-sm font-mono border bg-transparent outline-none focus:border-[var(--accent)] transition-colors"
                 style={{ borderColor: 'var(--border)', color: 'var(--foreground)', background: 'var(--surface)' }}
               />
+
+              {/* Referral code */}
+              {showRefInput ? (
+                <input
+                  type="text"
+                  placeholder="Referral code (e.g. REF-AB3F-9K2M)"
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                  className="w-full px-4 py-3 text-sm font-mono border bg-transparent outline-none focus:border-[var(--accent)] transition-colors"
+                  style={{ borderColor: 'var(--accent)', color: 'var(--accent)', background: 'var(--surface)' }}
+                />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowRefInput(true)}
+                  className="text-xs font-mono text-left transition-colors"
+                  style={{ color: 'var(--muted)' }}
+                >
+                  Have a referral code?
+                </button>
+              )}
 
               {error && (
                 <p className="text-xs font-mono" style={{ color: '#ff4444' }}>{error}</p>
