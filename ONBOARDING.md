@@ -236,8 +236,12 @@ The app's secret keys were recently rotated. Confirm the live app is working cor
 
 ---
 
-### Aariz — Main Task: MCP Server
+### Aariz — Start Here
 
+**B0 — Beta test the product first (before touching the MCP server)**
+Sign up at afferens.vercel.app. Get your API key from the dashboard. Call all 6 modalities using the demo endpoint (no key needed) and then the real `/api/perception` endpoint (uses your key). Use the feedback widget on the site to log anything that feels broken, confusing, or missing — attach screenshots. Do this before building anything.
+
+**B1 — Main Task: MCP Server**
 See Section 9 below. This is a standalone repo, published to npm. Full spec is there.
 
 ---
