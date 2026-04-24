@@ -113,17 +113,13 @@ export default function Home() {
           </div>
 
           <h1 className="text-5xl sm:text-6xl font-bold tracking-tight mb-6 leading-[1.1]" style={{ color: 'var(--foreground)' }}>
-            Your AI agent is flying blind.
+            Your agent is guessing.
             <br />
             <span style={{ color: 'var(--accent)' }}>Give it senses.</span>
           </h1>
 
-          <p className="text-lg mb-3 max-w-2xl mx-auto" style={{ color: 'var(--muted)', lineHeight: '1.7' }}>
-            AI agents fail in the physical world because they have no sensory grounding — they hallucinate state and make wrong decisions. Afferens gives your agent real-time perception data structured for your LLM context window.
-          </p>
-
-          <p className="text-sm mb-12 font-mono" style={{ color: 'var(--muted-2)' }}>
-            One API call. Six modalities. No sensor pipeline to build.
+          <p className="text-lg mb-12 max-w-2xl mx-auto" style={{ color: 'var(--muted)', lineHeight: '1.7' }}>
+            Afferens returns live real-world data — position, motion, camera, environment, audio — as structured JSON, ready to inject into any LLM context window. One API key. Zero sensor pipeline.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -132,7 +128,7 @@ export default function Home() {
               className="px-8 py-3 font-semibold text-sm transition-all hover:opacity-90 hover:shadow-lg"
               style={{ background: 'var(--accent)', color: '#000', boxShadow: '0 0 0 0 rgba(0,255,136,0)' }}
             >
-              Start for free — 10,000 tokens
+              Get your free API key
             </Link>
             <Link
               href="/docs"
@@ -156,7 +152,7 @@ export default function Home() {
             <span className="text-xs font-mono" style={{ color: 'var(--muted)' }}>terminal</span>
           </div>
           <pre className="p-4 text-xs font-mono overflow-x-auto" style={{ color: 'var(--accent)' }}>
-{`curl "https://afferens.vercel.app/api/demo?modality=VISION"`}
+{`curl "https://afferens.com/api/demo?modality=VISION"`}
           </pre>
           <div className="border-t px-4 py-2 flex items-center gap-2" style={{ borderColor: 'var(--border)', background: 'var(--surface-2)' }}>
             <span className="text-xs font-mono" style={{ color: 'var(--muted)' }}>response</span>
@@ -176,7 +172,8 @@ export default function Home() {
       "object_count": 2
     },
     "sense_tokens_consumed": 14
-  }]
+  }],
+  "tokens_remaining": 9986
 }`}
           </pre>
         </div>

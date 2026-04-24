@@ -1,7 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { checkRateLimit, getIp } from '@/lib/ratelimit'
+
+const MAX_MESSAGE_LENGTH = 2000
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024 // 10MB
+const MAX_FILES = 5
+const ALLOWED_MIME_TYPES = new Set([
+  'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+  'application/pdf', 'text/plain',
+])
 
 export async function POST(request: NextRequest) {
+  const ip = getIp(request)
+  const { allowed } = checkRateLimit(`feedback:${ip}`, 5, 15 * 60 * 1000)
+  if (!allowed) {
+    return NextResponse.json({ error: 'Too many requests. Try again later.' }, { status: 429 })
+  }
+
   const admin = createAdminClient()
 
   const formData = await request.formData()
@@ -14,6 +29,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Message is required' }, { status: 400 })
   }
 
+  if (message.trim().length > MAX_MESSAGE_LENGTH) {
+    return NextResponse.json({ error: `Message must be under ${MAX_MESSAGE_LENGTH} characters.` }, { status: 400 })
+  }
+
+  if (files.length > MAX_FILES) {
+    return NextResponse.json({ error: `Maximum ${MAX_FILES} files allowed.` }, { status: 400 })
+  }
+
+  for (const file of files) {
+    if (!file || file.size === 0) continue
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      return NextResponse.json({ error: `File "${file.name}" exceeds 10MB limit.` }, { status: 400 })
+    }
+    if (!ALLOWED_MIME_TYPES.has(file.type)) {
+      return NextResponse.json({ error: `File type "${file.type}" is not allowed.` }, { status: 400 })
+    }
+  }
+
   const attachmentUrls: string[] = []
 
   for (const file of files) {
@@ -24,7 +57,7 @@ export async function POST(request: NextRequest) {
 
     const { error } = await admin.storage
       .from('feedback-attachments')
-      .upload(path, buffer, { contentType: file.type })
+      .upload(path, buffer, { contentType: file.type, upsert: false })
 
     if (!error) {
       const { data } = admin.storage.from('feedback-attachments').getPublicUrl(path)

@@ -1,0 +1,118 @@
+# Afferens API — LLM Reference
+
+Afferens is the Universal Sensory Layer (USL) for AI agents. It provides structured, real-world physical perception data via a REST API. AI agents use Afferens to receive grounded sensor context — reducing hallucination and enabling real-world decision making.
+
+Base URL: https://afferens.com
+Auth: X-API-KEY header on every request
+Token economy: Each API call consumes Sense Tokens based on modality. Free tier: 10,000 tokens on signup.
+
+---
+
+## Endpoints
+
+### GET /api/perception
+Returns structured sensory perception data from connected nodes.
+
+Query params:
+- modality (string, optional): VISION | SPATIAL | ACOUSTIC | ENVIRONMENTAL | MOLECULAR | INTEROCEPTION — omit for all
+- limit (integer, optional): 1–10, default 1
+
+Response:
+{
+  "status": 200,
+  "data": [{
+    "timestamp": "ISO8601",
+    "entity_id": "string",
+    "modality": "VISION",
+    "classification": "string",
+    "confidence": 0.0–1.0,
+    "spatial_coords": {},
+    "sense_tokens_consumed": 14
+  }],
+  "count": 1,
+  "api_version": "v1.0.0"
+}
+
+### POST /api/ingest
+Push live sensor data from a node into the Afferens network.
+
+Body (JSON):
+- modality (string, required): VISION | SPATIAL | ACOUSTIC | ENVIRONMENTAL | MOLECULAR | INTEROCEPTION
+- data (object, required): sensor payload
+- classification (string, optional): label for this reading
+
+### POST /api/actuation
+Send a command to a physical node.
+
+Body (JSON):
+- target_node_id (string, required): e.g. "IPHONE-IOS-01"
+- command_type (string, required): CAPTURE_FRAME | TRIGGER_ALARM | MOVE_TO | ROTATE_CAMERA | LOCK | UNLOCK | ADJUST_SENSOR | SHUTDOWN_NODE
+- parameters (object, optional): command-specific params
+
+Cost: 5 Sense Tokens per command.
+
+### GET /api/commands
+Nodes poll this to receive pending commands.
+
+Query params:
+- node_id (string, required): the node's ID
+
+### GET /api/demo
+Public demo endpoint. No API key required. Returns canned sensory data for any modality.
+
+Query params:
+- modality (string, optional): same values as /api/perception
+
+---
+
+## Sense Token Costs
+
+| Modality      | Tokens/call |
+|---------------|-------------|
+| VISION        | 14          |
+| SPATIAL       | 10          |
+| ACOUSTIC      | 8           |
+| ENVIRONMENTAL | 6           |
+| MOLECULAR     | 18          |
+| INTEROCEPTION | 5           |
+| Actuation cmd | 5           |
+
+---
+
+## Error Codes
+
+| Code | Meaning                              |
+|------|--------------------------------------|
+| 401  | Missing or invalid API key           |
+| 402  | Free tier token limit reached        |
+| 403  | API key inactive                     |
+| 404  | No data found for requested modality |
+| 429  | Rate limit exceeded                  |
+
+---
+
+## Quick Start (curl)
+
+# Demo — no key needed
+curl "https://afferens.com/api/demo?modality=VISION"
+
+# Authenticated
+curl "https://afferens.com/api/perception?modality=SPATIAL&limit=1" \
+  -H "X-API-KEY: YOUR_KEY"
+
+## Quick Start (Python)
+
+import requests
+
+r = requests.get(
+    "https://afferens.com/api/perception",
+    headers={"X-API-KEY": "YOUR_KEY"},
+    params={"modality": "VISION", "limit": 1}
+)
+print(r.json())
+
+---
+
+Sign up: https://afferens.com/signup
+Pricing: https://afferens.com/pricing
+Docs: https://afferens.com/docs

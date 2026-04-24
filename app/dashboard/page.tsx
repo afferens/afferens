@@ -137,7 +137,7 @@ export default async function DashboardPage() {
             Quick start
           </div>
           <pre className="text-xs font-mono overflow-x-auto" style={{ color: '#aaa' }}>
-{`curl https://afferens.vercel.app/api/perception \\
+{`curl https://afferens.com/api/perception \\
   -H "X-API-KEY: ${keyRecord?.key ?? 'YOUR_KEY'}" \\
   -G -d "modality=vision" -d "limit=1"`}
           </pre>

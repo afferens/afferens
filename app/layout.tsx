@@ -19,11 +19,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Afferens — The Sensory Layer for AI Agents",
     description: "Give your AI agents real-world perception. One API. Six senses. Built for developers.",
-    url: "https://afferens.vercel.app",
+    url: "https://afferens.com",
     siteName: "Afferens",
     images: [
       {
-        url: "https://afferens.vercel.app/afferens-logo.png",
+        url: "https://afferens.com/afferens-logo.png",
         width: 1320,
         height: 880,
         alt: "Afferens",
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Afferens — The Sensory Layer for AI Agents",
     description: "Give your AI agents real-world perception. One API. Six senses. Built for developers.",
-    images: ["https://afferens.vercel.app/afferens-logo.png"],
+    images: ["https://afferens.com/afferens-logo.png"],
   },
 };
 

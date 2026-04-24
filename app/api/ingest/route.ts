@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { checkRateLimit, getIp } from '@/lib/ratelimit'
 
 // Maps the raw modality string to a token cost
 const TOKEN_COST: Record<string, number> = {
@@ -12,6 +13,12 @@ const TOKEN_COST: Record<string, number> = {
 }
 
 export async function POST(request: NextRequest) {
+  const ip = getIp(request)
+  const { allowed } = checkRateLimit(`ingest:${ip}`, 100, 60_000)
+  if (!allowed) {
+    return NextResponse.json({ status: 429, error: 'Rate limit exceeded. Max 100 requests/min per IP.' }, { status: 429 })
+  }
+
   const apiKey = request.headers.get('x-api-key')
 
   if (!apiKey) {
@@ -79,7 +86,7 @@ export async function POST(request: NextRequest) {
         status: 402,
         error: 'Free tier limit reached (10,000 Sense Tokens). Top up your credits to continue.',
         tokens_consumed: keyRecord.tokens_consumed,
-        upgrade_url: 'https://afferens.vercel.app/pricing',
+        upgrade_url: 'https://afferens.com/pricing',
       },
       { status: 402 }
     )

@@ -23,7 +23,7 @@ export default function DocsPage() {
 
         <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>API Reference</h1>
         <p className="text-sm mb-12" style={{ color: 'var(--muted)' }}>
-          Base URL: <code className="font-mono" style={{ color: 'var(--accent)' }}>https://afferens.vercel.app</code>
+          Base URL: <code className="font-mono" style={{ color: 'var(--accent)' }}>https://afferens.com</code>
         </p>
 
         {/* Authentication */}
@@ -150,7 +150,7 @@ export default function DocsPage() {
                 </div>
               </div>
               <pre className="text-xs font-mono overflow-x-auto p-4 border" style={{ borderColor: 'var(--border)', background: '#0a0a0a', color: '#aaa' }}>
-{`curl https://afferens.vercel.app/api/actuation \\
+{`curl https://afferens.com/api/actuation \\
   -X POST \\
   -H "X-API-KEY: YOUR_KEY" \\
   -H "Content-Type: application/json" \\
@@ -170,7 +170,7 @@ export default function DocsPage() {
               curl
             </div>
             <pre className="p-5 text-xs font-mono overflow-x-auto" style={{ background: '#0a0a0a', color: '#aaa' }}>
-{`curl https://afferens.vercel.app/api/perception \\
+{`curl https://afferens.com/api/perception \\
   -H "X-API-KEY: YOUR_KEY" \\
   -G \\
   -d "modality=vision" \\
@@ -187,7 +187,7 @@ export default function DocsPage() {
 {`import requests
 
 response = requests.get(
-    "https://afferens.vercel.app/api/perception",
+    "https://afferens.com/api/perception",
     headers={"X-API-KEY": "YOUR_KEY"},
     params={"modality": "vision", "limit": 1}
 )

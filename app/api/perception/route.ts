@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { checkRateLimit, getIp } from '@/lib/ratelimit'
 
 export async function GET(request: NextRequest) {
+  const ip = getIp(request)
+  const { allowed } = checkRateLimit(`perception:${ip}`, 100, 60_000)
+  if (!allowed) {
+    return NextResponse.json({ status: 429, error: 'Rate limit exceeded. Max 100 requests/min per IP.' }, { status: 429 })
+  }
+
   const apiKey = request.headers.get('x-api-key')
   const modality = request.nextUrl.searchParams.get('modality')?.toUpperCase() || null
   const limit = Math.min(parseInt(request.nextUrl.searchParams.get('limit') || '1'), 10)
@@ -45,7 +52,7 @@ export async function GET(request: NextRequest) {
         status: 402,
         error: 'Free tier limit reached (10,000 Sense Tokens). Top up your credits to continue.',
         tokens_consumed: keyRecord.tokens_consumed,
-        upgrade_url: 'https://afferens.vercel.app/pricing',
+        upgrade_url: 'https://afferens.com/pricing',
       },
       { status: 402 }
     )
@@ -84,7 +91,7 @@ export async function GET(request: NextRequest) {
   // Trigger auto top-up if enabled and tokens are below threshold (fire and forget)
   const remaining = FREE_TIER_LIMIT - newConsumed
   if (remaining <= (keyRecord.auto_topup_threshold ?? 1000) && keyRecord.auto_topup_enabled) {
-    fetch(`${process.env.NEXT_PUBLIC_APP_URL ?? 'https://afferens.vercel.app'}/api/autotopup`, {
+    fetch(`${process.env.NEXT_PUBLIC_APP_URL ?? 'https://afferens.com'}/api/autotopup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ key_id: keyRecord.id }),

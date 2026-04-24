@@ -136,9 +136,10 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     status: 200,
     demo: true,
-    note: 'This is demo data. Sign up at afferens.vercel.app/signup to get a free API key with 10,000 real tokens.',
+    note: 'This is demo data. Sign up at afferens.com/signup to get a free API key with 10,000 real tokens.',
     data: [data],
     count: 1,
+    tokens_remaining: 10000,
     api_version: 'v1.0.0',
   })
 }

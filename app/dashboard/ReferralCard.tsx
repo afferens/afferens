@@ -57,7 +57,7 @@ export default function ReferralCard({ referralCode, referralCount, referredBy, 
         <p className="text-xs font-mono mt-2" style={{ color: 'var(--muted)' }}>
           Share your link:{' '}
           <span style={{ color: 'var(--foreground)' }}>
-            afferens.vercel.app/signup?ref={referralCode}
+            afferens.com/signup?ref={referralCode}
           </span>
         </p>
       </div>

@@ -18,8 +18,8 @@ export async function POST(request: NextRequest) {
     mode: 'setup',
     currency: 'usd',
     customer_email: user.email ?? undefined,
-    success_url: `https://afferens.vercel.app/dashboard?autotopup=success`,
-    cancel_url: `https://afferens.vercel.app/dashboard`,
+    success_url: `https://afferens.com/dashboard?autotopup=success`,
+    cancel_url: `https://afferens.com/dashboard`,
     metadata: {
       user_id: user.id,
       pack: pack ?? 'spark',

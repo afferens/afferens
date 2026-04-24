@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { checkRateLimit, getIp } from '@/lib/ratelimit'
 
 // Nodes call this to get their pending commands, then mark them executed
 export async function GET(request: NextRequest) {
+  const ip = getIp(request)
+  const { allowed } = checkRateLimit(`commands:${ip}`, 100, 60_000)
+  if (!allowed) {
+    return NextResponse.json({ status: 429, error: 'Rate limit exceeded. Max 100 requests/min per IP.' }, { status: 429 })
+  }
+
   const apiKey = request.headers.get('x-api-key')
   const nodeId = request.nextUrl.searchParams.get('node_id')
 
