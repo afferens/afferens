@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import CopyButton from './CopyButton'
 import AutoTopup from './AutoTopup'
+import BuyTokens from './BuyTokens'
 import ReferralCard from './ReferralCard'
 
 export default async function DashboardPage() {
@@ -113,6 +114,9 @@ export default async function DashboardPage() {
             </div>
           )
         })()}
+
+        {/* Buy tokens */}
+        <BuyTokens />
 
         {/* Referrals */}
         {keyRecord?.referral_code && (
