@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import Nav from '@/components/Nav'
+import Footer from '@/components/Footer'
 
 type SensorReading = {
   time: string
@@ -316,7 +318,11 @@ export default function NodePage() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col px-5 py-8" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
+    <main className="min-h-screen flex flex-col" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
+
+      <Nav />
+
+      <div className="flex-1 px-5 py-8">
 
       {/* Header */}
       <div className="mb-8">
@@ -489,6 +495,8 @@ export default function NodePage() {
         </div>
       )}
 
+      </div>
+      <Footer />
     </main>
   )
 }

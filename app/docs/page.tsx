@@ -1,23 +1,12 @@
 import Link from 'next/link'
-import Image from 'next/image'
+import Nav from '@/components/Nav'
+import Footer from '@/components/Footer'
 
 export default function DocsPage() {
   return (
     <main className="min-h-screen flex flex-col" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
 
-      {/* Nav */}
-      <nav className="flex items-center justify-between px-8 py-5 border-b" style={{ borderColor: 'var(--border)' }}>
-        <Link href="/">
-          <Image src="/afferens-logo.png" alt="Afferens" height={28} width={140} style={{ objectFit: 'contain' }} />
-        </Link>
-        <Link
-          href="/signup"
-          className="px-4 py-2 text-sm font-medium border"
-          style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}
-        >
-          Sign In
-        </Link>
-      </nav>
+      <Nav />
 
       <div className="flex-1 px-8 py-12 max-w-3xl mx-auto w-full">
 
@@ -216,6 +205,7 @@ print(data)`}
         </section>
 
       </div>
+      <Footer />
     </main>
   )
 }

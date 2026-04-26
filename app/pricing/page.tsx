@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import Image from 'next/image'
+import Nav from '@/components/Nav'
+import Footer from '@/components/Footer'
 
 const PACKS = [
   {
@@ -48,16 +49,7 @@ export default function PricingPage() {
   return (
     <main className="min-h-screen flex flex-col" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
 
-      {/* Nav */}
-      <nav className="flex items-center justify-between px-8 py-5 border-b" style={{ borderColor: 'var(--border)' }}>
-        <Link href="/">
-          <Image src="/afferens-logo.png" alt="Afferens" height={28} width={140} style={{ objectFit: 'contain' }} />
-        </Link>
-        <div className="flex items-center gap-6 text-sm" style={{ color: 'var(--muted)' }}>
-          <Link href="/docs" className="hover:text-white transition-colors">Docs</Link>
-          <Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link>
-        </div>
-      </nav>
+      <Nav />
 
       <div className="flex-1 px-8 py-16 max-w-5xl mx-auto w-full">
 
@@ -203,6 +195,7 @@ export default function PricingPage() {
         </div>
 
       </div>
+      <Footer />
     </main>
   )
 }

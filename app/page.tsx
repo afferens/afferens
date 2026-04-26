@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import Image from 'next/image'
+import Nav from '@/components/Nav'
+import Footer from '@/components/Footer'
 
 const SENSES = [
   {
@@ -78,23 +79,7 @@ export default function Home() {
   return (
     <main className="min-h-screen flex flex-col" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
 
-      {/* Nav */}
-      <nav className="flex items-center justify-between px-8 py-5 border-b sticky top-0 z-40 backdrop-blur-sm" style={{ borderColor: 'var(--border)', background: 'rgba(8,8,8,0.85)' }}>
-        <Link href="/">
-          <Image src="/afferens-logo.png" alt="Afferens" height={26} width={130} style={{ objectFit: 'contain' }} />
-        </Link>
-        <div className="flex items-center gap-6 text-sm" style={{ color: 'var(--muted)' }}>
-          <Link href="/docs" className="hover:text-white transition-colors">Docs</Link>
-          <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
-          <Link
-            href="/signup"
-            className="px-4 py-2 text-sm font-medium border transition-all hover:border-white"
-            style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}
-          >
-            Sign In
-          </Link>
-        </div>
-      </nav>
+      <Nav />
 
       {/* Hero */}
       <section className="relative flex-1 flex flex-col items-center justify-center px-8 py-28 text-center overflow-hidden">
@@ -241,17 +226,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="px-8 py-6 border-t flex items-center justify-between" style={{ borderColor: 'var(--border)' }}>
-        <span className="text-sm" style={{ color: 'var(--muted)' }}>
-          © 2026 Afferens / Wild Rice
-        </span>
-        <div className="flex items-center gap-6 text-sm" style={{ color: 'var(--muted)' }}>
-          <Link href="/docs" className="hover:text-white transition-colors">Docs</Link>
-          <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
-          <Link href="/legal" className="hover:text-white transition-colors">Legal</Link>
-        </div>
-      </footer>
+      <Footer />
     </main>
   )
 }
