@@ -38,10 +38,6 @@ create table if not exists public.perception_events (
 -- Anyone with a valid API key can read perception events (enforced in API route, not RLS)
 alter table public.perception_events enable row level security;
 
-create policy "Service role can do everything on perception_events"
-  on public.perception_events for all
-  using (true);
-
 -- ============================================================
 -- SEED DATA — realistic simulated perception events
 -- ============================================================
