@@ -78,45 +78,56 @@ export async function POST(request: NextRequest) {
   }
 
   // ── Payment mode: manual credit pack purchase ──
-  const email = session.customer_details?.email
-  if (!email) {
-    return NextResponse.json({ error: 'No email on session' }, { status: 400 })
-  }
+  let userId: string
+  let tokensToAdd: number
 
-  const lineItems = await stripe.checkout.sessions.listLineItems(session.id, { limit: 1 })
-  const productName = lineItems.data[0]?.description?.toLowerCase() ?? ''
-
-  let tokensToAdd = 0
-  for (const [pack, tokens] of Object.entries(TOKEN_GRANTS)) {
-    if (productName.includes(pack)) {
-      tokensToAdd = tokens
-      break
+  if (session.metadata?.user_id && session.metadata?.tokens) {
+    // Fast path: dynamic checkout session with metadata
+    userId = session.metadata.user_id
+    tokensToAdd = parseInt(session.metadata.tokens)
+  } else {
+    // Legacy path: static buy.stripe.com links — match by email + amount
+    const email = session.customer_details?.email
+    if (!email) {
+      return NextResponse.json({ error: 'No email on session' }, { status: 400 })
     }
-  }
 
-  if (tokensToAdd === 0) {
-    const amount = session.amount_total ?? 0
-    if (amount <= 900)       tokensToAdd = TOKEN_GRANTS.spark
-    else if (amount <= 2900) tokensToAdd = TOKEN_GRANTS.builder
-    else if (amount <= 9900) tokensToAdd = TOKEN_GRANTS.studio
-    else                     tokensToAdd = TOKEN_GRANTS.scale
-  }
+    const lineItems = await stripe.checkout.sessions.listLineItems(session.id, { limit: 1 })
+    const productName = lineItems.data[0]?.description?.toLowerCase() ?? ''
 
-  const { data: { users }, error: userError } = await supabase.auth.admin.listUsers()
-  if (userError) {
-    return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 })
-  }
+    tokensToAdd = 0
+    for (const [pack, tokens] of Object.entries(TOKEN_GRANTS)) {
+      if (productName.includes(pack)) {
+        tokensToAdd = tokens
+        break
+      }
+    }
 
-  const user = users.find(u => u.email === email)
-  if (!user) {
-    console.error(`Stripe webhook: no Afferens account found for email ${email}`)
-    return NextResponse.json({ received: true, warning: 'No matching user found' })
+    if (tokensToAdd === 0) {
+      const amount = session.amount_total ?? 0
+      if (amount <= 900)       tokensToAdd = TOKEN_GRANTS.spark
+      else if (amount <= 2900) tokensToAdd = TOKEN_GRANTS.builder
+      else if (amount <= 9900) tokensToAdd = TOKEN_GRANTS.studio
+      else                     tokensToAdd = TOKEN_GRANTS.scale
+    }
+
+    const { data: { users }, error: userError } = await supabase.auth.admin.listUsers()
+    if (userError) {
+      return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 })
+    }
+
+    const found = users.find(u => u.email === email)
+    if (!found) {
+      console.error(`Stripe webhook: no Afferens account found for email ${email}`)
+      return NextResponse.json({ received: true, warning: 'No matching user found' })
+    }
+    userId = found.id
   }
 
   const { data: keyRecord, error: keyError } = await supabase
     .from('api_keys')
     .select('id, tokens_consumed, referred_by, referral_redeemed')
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
     .single()
 
   if (keyError || !keyRecord) {

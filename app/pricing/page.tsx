@@ -1,51 +1,97 @@
-import Link from 'next/link'
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 
 const PACKS = [
   {
     name: 'Spark',
+    pack: 'spark',
     price: '$9',
     tokens: '50,000',
-    tokensRaw: 50_000,
     callsEst: '~5,000',
     description: 'Hit the wall. Like what you see. Buy more.',
-    ctaHref: 'https://buy.stripe.com/bJebJ13vk6MQapSfBe8N200',
     highlight: false,
   },
   {
     name: 'Builder',
+    pack: 'builder',
     price: '$29',
     tokens: '200,000',
-    tokensRaw: 200_000,
     callsEst: '~20,000',
     description: 'Enough to build and ship a real integration.',
-    ctaHref: 'https://buy.stripe.com/4gM28r9TI5IM41u9cQ8N201',
     highlight: true,
   },
   {
     name: 'Studio',
+    pack: 'studio',
     price: '$99',
     tokens: '1,000,000',
-    tokensRaw: 1_000_000,
     callsEst: '~100,000',
     description: 'For agents running in production.',
-    ctaHref: 'https://buy.stripe.com/eVq00j8PE8UYgOg60E8N202',
     highlight: false,
   },
   {
     name: 'Scale',
+    pack: 'scale',
     price: '$299',
     tokens: '4,000,000',
-    tokensRaw: 4_000_000,
     callsEst: '~400,000',
     description: 'High-volume. Best per-token rate.',
-    ctaHref: 'https://buy.stripe.com/6oU9AT8PEdbe9lO88M8N203',
     highlight: false,
   },
 ]
 
+const TOKENS_PER_DOLLAR = 50_000 / 9
+
+function calcTokens(dollars: number): number {
+  return Math.floor(dollars * TOKENS_PER_DOLLAR)
+}
+
 export default function PricingPage() {
+  const router = useRouter()
+  const [loading, setLoading] = useState<string | null>(null)
+  const [customAmount, setCustomAmount] = useState('')
+  const [customError, setCustomError] = useState('')
+
+  async function handleBuy(pack: string, amount?: number) {
+    setLoading(pack)
+    try {
+      const res = await fetch('/api/checkout/purchase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pack, amount }),
+      })
+
+      if (res.status === 401) {
+        router.push('/signup')
+        return
+      }
+
+      const data = await res.json()
+      if (data.url) {
+        window.location.href = data.url
+      }
+    } finally {
+      setLoading(null)
+    }
+  }
+
+  function handleCustomBuy() {
+    const val = parseFloat(customAmount)
+    if (!val || val < 10) {
+      setCustomError('Minimum $10')
+      return
+    }
+    setCustomError('')
+    handleBuy('custom', val)
+  }
+
+  const customDollars = parseFloat(customAmount) || 0
+  const customTokens = customDollars >= 10 ? calcTokens(customDollars) : 0
+
   return (
     <main className="min-h-screen flex flex-col" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
 
@@ -72,24 +118,24 @@ export default function PricingPage() {
               Every new account gets 10,000 Sense Tokens free. No card required.
             </p>
           </div>
-          <Link
+          <a
             href="/signup"
             className="text-xs font-mono font-bold px-4 py-2 flex-shrink-0"
             style={{ border: '1px solid var(--accent)', color: 'var(--accent)' }}
           >
             Sign In Free
-          </Link>
+          </a>
         </div>
 
         {/* Credit pack grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {PACKS.map(pack => (
             <div
               key={pack.name}
               className="border p-6 flex flex-col card-hover"
               style={{
                 borderColor: pack.highlight ? 'var(--accent)' : 'var(--border)',
-                background: pack.highlight ? 'var(--surface)' : 'var(--surface)',
+                background: 'var(--surface)',
               }}
             >
               {pack.highlight && (
@@ -112,25 +158,81 @@ export default function PricingPage() {
               <p className="text-sm mb-6 flex-1" style={{ color: 'var(--muted)' }}>
                 {pack.description}
               </p>
-              <a
-                href={pack.ctaHref}
-                className="block text-center py-3 text-sm font-bold font-mono"
+              <button
+                onClick={() => handleBuy(pack.pack)}
+                disabled={loading !== null}
+                className="block w-full text-center py-3 text-sm font-bold font-mono"
                 style={{
                   background: pack.highlight ? 'var(--accent)' : 'transparent',
                   color: pack.highlight ? '#000' : 'var(--foreground)',
                   border: pack.highlight ? 'none' : '1px solid var(--border)',
+                  opacity: loading !== null ? 0.6 : 1,
+                  cursor: loading !== null ? 'not-allowed' : 'pointer',
                 }}
               >
-                Buy {pack.name}
-              </a>
+                {loading === pack.pack ? 'Loading…' : `Buy ${pack.name}`}
+              </button>
             </div>
           ))}
+        </div>
+
+        {/* Custom topup */}
+        <div className="border p-6 mb-16" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+          <div className="text-xs font-mono font-bold mb-1 uppercase tracking-widest" style={{ color: 'var(--muted)' }}>
+            Custom Amount
+          </div>
+          <p className="text-xs font-mono mb-4" style={{ color: 'var(--muted)' }}>
+            Top up any amount — min $10, no maximum. Tokens never expire.
+          </p>
+          <div className="flex items-start gap-3 flex-wrap">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center border" style={{ borderColor: customError ? '#ff4444' : 'var(--border)' }}>
+                <span className="px-3 text-sm font-mono" style={{ color: 'var(--muted)', borderRight: '1px solid var(--border)' }}>$</span>
+                <input
+                  type="number"
+                  min="10"
+                  step="1"
+                  placeholder="10"
+                  value={customAmount}
+                  onChange={e => { setCustomAmount(e.target.value); setCustomError('') }}
+                  className="px-3 py-2 text-sm font-mono bg-transparent outline-none w-28"
+                  style={{ color: 'var(--foreground)' }}
+                />
+              </div>
+              {customError && (
+                <span className="text-xs font-mono" style={{ color: '#ff4444' }}>{customError}</span>
+              )}
+            </div>
+            {customTokens > 0 && (
+              <div className="flex items-center py-2">
+                <span className="text-sm font-mono" style={{ color: 'var(--accent)' }}>
+                  = {customTokens.toLocaleString()} tokens
+                </span>
+              </div>
+            )}
+            <button
+              onClick={handleCustomBuy}
+              disabled={loading !== null}
+              className="px-6 py-2 text-sm font-bold font-mono"
+              style={{
+                border: '1px solid var(--border)',
+                color: 'var(--foreground)',
+                background: 'transparent',
+                opacity: loading !== null ? 0.6 : 1,
+                cursor: loading !== null ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {loading === 'custom' ? 'Loading…' : 'Buy Custom'}
+            </button>
+          </div>
+          <p className="text-xs font-mono mt-3" style={{ color: 'var(--muted)' }}>
+            A small processing fee is added at checkout.
+          </p>
         </div>
 
         {/* Per-token rate table */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
 
-          {/* Value breakdown */}
           <div className="border p-6" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
             <div className="text-xs font-mono mb-4 uppercase tracking-widest" style={{ color: 'var(--muted)' }}>
               Cost per 1,000 tokens
@@ -153,7 +255,6 @@ export default function PricingPage() {
             </p>
           </div>
 
-          {/* Modality cost table */}
           <div className="border p-6" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
             <div className="text-xs font-mono mb-4 uppercase tracking-widest" style={{ color: 'var(--muted)' }}>
               Tokens per API call
