@@ -5,7 +5,7 @@ import { checkRateLimit, getIp } from '@/lib/ratelimit'
 // Nodes call this to get their pending commands, then mark them executed
 export async function GET(request: NextRequest) {
   const ip = getIp(request)
-  const { allowed } = checkRateLimit(`commands:${ip}`, 100, 60_000)
+  const { allowed } = await checkRateLimit(`commands:${ip}`, 100, 60_000)
   if (!allowed) {
     return NextResponse.json({ status: 429, error: 'Rate limit exceeded. Max 100 requests/min per IP.' }, { status: 429 })
   }

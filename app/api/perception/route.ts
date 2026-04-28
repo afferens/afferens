@@ -4,7 +4,7 @@ import { checkRateLimit, getIp } from '@/lib/ratelimit'
 
 export async function GET(request: NextRequest) {
   const ip = getIp(request)
-  const { allowed } = checkRateLimit(`perception:${ip}`, 100, 60_000)
+  const { allowed } = await checkRateLimit(`perception:${ip}`, 100, 60_000)
   if (!allowed) {
     return NextResponse.json({ status: 429, error: 'Rate limit exceeded. Max 100 requests/min per IP.' }, { status: 429 })
   }

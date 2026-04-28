@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { checkRateLimit, getIp } from '@/lib/ratelimit'
 
 export async function POST(request: NextRequest) {
-  const { allowed } = checkRateLimit(getIp(request), 5, 15 * 60 * 1000)
+  const { allowed } = await checkRateLimit(getIp(request), 5, 15 * 60 * 1000)
   if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
 
   const supabase = await createClient()

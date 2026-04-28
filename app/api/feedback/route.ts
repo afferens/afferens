@@ -12,7 +12,7 @@ const ALLOWED_MIME_TYPES = new Set([
 
 export async function POST(request: NextRequest) {
   const ip = getIp(request)
-  const { allowed } = checkRateLimit(`feedback:${ip}`, 5, 15 * 60 * 1000)
+  const { allowed } = await checkRateLimit(`feedback:${ip}`, 5, 15 * 60 * 1000)
   if (!allowed) {
     return NextResponse.json({ error: 'Too many requests. Try again later.' }, { status: 429 })
   }

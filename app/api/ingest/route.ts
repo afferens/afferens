@@ -14,7 +14,7 @@ const TOKEN_COST: Record<string, number> = {
 
 export async function POST(request: NextRequest) {
   const ip = getIp(request)
-  const { allowed } = checkRateLimit(`ingest:${ip}`, 100, 60_000)
+  const { allowed } = await checkRateLimit(`ingest:${ip}`, 100, 60_000)
   if (!allowed) {
     return NextResponse.json({ status: 429, error: 'Rate limit exceeded. Max 100 requests/min per IP.' }, { status: 429 })
   }
