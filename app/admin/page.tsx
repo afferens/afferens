@@ -4,7 +4,7 @@ import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 
-const ADMIN_EMAIL = 'wildricemedia@gmail.com'
+const ADMIN_EMAIL = 'dionysus3978@gmail.com'
 
 export default async function AdminPage() {
   const supabase = await createClient()
