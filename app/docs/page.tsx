@@ -15,6 +15,50 @@ export default function DocsPage() {
           Base URL: <code className="font-mono" style={{ color: 'var(--accent)' }}>https://afferens.com</code>
         </p>
 
+        {/* MCP Server */}
+        <section className="mb-12">
+          <h2 className="text-xs font-mono uppercase tracking-widest mb-4" style={{ color: 'var(--muted)' }}>MCP Server</h2>
+          <div className="border p-5 mb-4" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+            <p className="text-sm mb-4" style={{ color: 'var(--muted)' }}>
+              Connect Afferens to any MCP-compatible AI assistant — Claude, Cursor, Windsurf — in under a minute.
+              No setup beyond adding your key. Free demo tool requires no key at all.
+            </p>
+            <div className="text-xs font-mono mb-3 uppercase tracking-widest" style={{ color: 'var(--muted)' }}>Claude Code</div>
+            <pre className="text-xs font-mono p-4 border mb-4" style={{ borderColor: 'var(--border)', background: '#0a0a0a', color: '#aaa' }}>
+{`claude mcp add afferens -e AFFERENS_API_KEY=YOUR_KEY -- npx -y @afferens/mcp-server`}
+            </pre>
+            <div className="text-xs font-mono mb-3 uppercase tracking-widest" style={{ color: 'var(--muted)' }}>Claude Desktop · Cursor · Windsurf</div>
+            <pre className="text-xs font-mono p-4 border" style={{ borderColor: 'var(--border)', background: '#0a0a0a', color: '#aaa' }}>
+{`{
+  "mcpServers": {
+    "afferens": {
+      "command": "npx",
+      "args": ["-y", "@afferens/mcp-server"],
+      "env": { "AFFERENS_API_KEY": "YOUR_KEY" }
+    }
+  }
+}`}
+            </pre>
+          </div>
+          <div className="border p-4" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+            <div className="text-xs font-mono mb-3 uppercase tracking-widest" style={{ color: 'var(--muted)' }}>Available Tools</div>
+            <div className="border" style={{ borderColor: 'var(--border)' }}>
+              {[
+                { name: 'afferens_demo', auth: 'none', desc: 'Live perception data across all 6 modalities. No key needed.' },
+                { name: 'afferens_perceive', auth: 'API key', desc: 'Query live events by modality (VISION · SPATIAL · ACOUSTIC · ENVIRONMENTAL · MOLECULAR · INTEROCEPTION) with limit filtering.' },
+              ].map((t, i) => (
+                <div key={t.name} className={`flex gap-4 p-4 ${i > 0 ? 'border-t' : ''}`} style={{ borderColor: 'var(--border)' }}>
+                  <div className="w-40 shrink-0">
+                    <code className="text-xs font-mono" style={{ color: 'var(--accent)' }}>{t.name}</code>
+                    <div className="text-xs mt-1 font-mono" style={{ color: 'var(--muted)' }}>{t.auth}</div>
+                  </div>
+                  <div className="text-xs" style={{ color: 'var(--muted)' }}>{t.desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* Authentication */}
         <section className="mb-12">
           <h2 className="text-xs font-mono uppercase tracking-widest mb-4" style={{ color: 'var(--muted)' }}>Authentication</h2>
