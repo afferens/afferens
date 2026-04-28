@@ -74,9 +74,11 @@ export default async function DashboardPage() {
         {/* Token usage */}
         {(() => {
           const FREE_TIER_LIMIT = 10_000
-          const consumed = keyRecord?.tokens_consumed ?? 0
-          const remaining = Math.max(0, FREE_TIER_LIMIT - consumed)
-          const pct = Math.min(100, Math.round((consumed / FREE_TIER_LIMIT) * 100))
+          const raw = keyRecord?.tokens_consumed ?? 0
+          const totalGranted = Math.max(FREE_TIER_LIMIT, FREE_TIER_LIMIT - Math.min(0, raw))
+          const tokensUsed = Math.max(0, raw)
+          const remaining = totalGranted - tokensUsed
+          const pct = totalGranted > 0 ? Math.min(100, Math.round((tokensUsed / totalGranted) * 100)) : 0
           const nearLimit = pct >= 80
 
           return (
@@ -86,22 +88,22 @@ export default async function DashboardPage() {
                   Sense Tokens
                 </div>
                 <div className="text-xs font-mono" style={{ color: 'var(--muted)' }}>
-                  Free tier — 10,000 tokens
+                  {totalGranted.toLocaleString()} total
                 </div>
               </div>
-              <div className="text-4xl font-bold font-mono mb-2" style={{ color: nearLimit ? '#ff4444' : 'var(--accent)' }}>
-                {consumed.toLocaleString()}
+              <div className="text-4xl font-bold font-mono mb-1" style={{ color: nearLimit ? '#ff4444' : 'var(--accent)' }}>
+                {remaining.toLocaleString()}
               </div>
+              <p className="text-xs font-mono mb-3" style={{ color: 'var(--muted)' }}>
+                tokens remaining &mdash; {tokensUsed.toLocaleString()} used ({pct}%)
+              </p>
               {/* Progress bar */}
-              <div className="w-full h-1.5 rounded-full mb-2" style={{ background: 'var(--border)' }}>
+              <div className="w-full h-1.5 rounded-full" style={{ background: 'var(--border)' }}>
                 <div
                   className="h-1.5 rounded-full"
                   style={{ width: `${pct}%`, background: nearLimit ? '#ff4444' : 'var(--accent)', transition: 'width 0.3s' }}
                 />
               </div>
-              <p className="text-xs font-mono" style={{ color: nearLimit ? '#ff4444' : 'var(--muted)' }}>
-                {remaining.toLocaleString()} tokens remaining ({pct}% used)
-              </p>
               {nearLimit && (
                 <Link
                   href="/pricing"
